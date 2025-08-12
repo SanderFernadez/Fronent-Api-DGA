@@ -122,26 +122,7 @@
                   </div>
                 </div>
 
-                <div class="col-12">
-                  <label for="category" class="form-label">Categoría</label>
-                  <div class="input-group">
-                    <span class="input-group-text">
-                      <i class="fas fa-tags"></i>
-                    </span>
-                    <input
-                      id="category"
-                      v-model="form.category"
-                      type="text"
-                      class="form-control"
-                      :class="{ 'is-invalid': errors.category }"
-                      @blur="validateField('category')"
-                      placeholder="Categoría del producto"
-                    />
-                  </div>
-                  <div v-if="errors.category" class="invalid-feedback">
-                    {{ errors.category }}
-                  </div>
-                </div>
+
               </div>
 
               <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
@@ -170,7 +151,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { productService, type UpdateProductRequest } from '@/services/productService'
-import { validateForm, isFormValid, productValidationRules } from '@/utils/validations'
+import { validateForm, validateField as validateFieldUtil, productValidationRules } from '@/utils/validations'
 import { showErrorMessage } from '@/utils/errorHandler'
 
 const router = useRouter()
@@ -180,8 +161,7 @@ const form = reactive<UpdateProductRequest>({
   name: '',
   description: '',
   price: 0,
-  stock: 0,
-  category: ''
+  stock: 0
 })
 
 const errors = reactive<Record<string, string>>({})
@@ -193,12 +173,19 @@ const productId = computed(() => route.params.id as string)
 
 // Validar campo específico
 const validateField = (field: string) => {
-  const fieldErrors = validateForm({ [field]: form[field as keyof UpdateProductRequest] }, { [field]: productValidationRules[field] })
-  errors[field] = fieldErrors[field] || ''
+  const fieldValue = form[field as keyof UpdateProductRequest]
+  const fieldRules = productValidationRules[field]
+  if (fieldRules) {
+    const error = validateFieldUtil(fieldValue, fieldRules)
+    errors[field] = error || ''
+  }
 }
 
 // Verificar si el formulario es válido
-const formIsValid = computed(() => isFormValid(form, productValidationRules))
+const formIsValid = computed(() => {
+  const formErrors = validateForm(form, productValidationRules)
+  return Object.keys(formErrors).length === 0
+})
 
 // Cargar producto
 const loadProduct = async () => {
@@ -206,14 +193,14 @@ const loadProduct = async () => {
     loading.value = true
     error.value = ''
     
-    const product = await productService.getById(parseInt(productId.value))
+    const response = await productService.getById(parseInt(productId.value))
+    const product = (response as any).data || response
     
     // Llenar el formulario con los datos del producto
     form.name = product.name
     form.description = product.description || ''
     form.price = product.price
     form.stock = product.stock
-    form.category = product.category || ''
     
   } catch (err) {
     error.value = 'Error al cargar el producto. Verifique que el ID sea válido.'

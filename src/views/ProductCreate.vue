@@ -107,26 +107,7 @@
                   </div>
                 </div>
 
-                <div class="col-12">
-                  <label for="category" class="form-label">Categoría</label>
-                  <div class="input-group">
-                    <span class="input-group-text">
-                      <i class="fas fa-tags"></i>
-                    </span>
-                    <input
-                      id="category"
-                      v-model="form.category"
-                      type="text"
-                      class="form-control"
-                      :class="{ 'is-invalid': errors.category }"
-                      @blur="validateField('category')"
-                      placeholder="Categoría del producto"
-                    />
-                  </div>
-                  <div v-if="errors.category" class="invalid-feedback">
-                    {{ errors.category }}
-                  </div>
-                </div>
+
               </div>
 
               <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
@@ -163,8 +144,7 @@ const form = reactive<CreateProductRequest>({
   name: '',
   description: '',
   price: 0,
-  stock: 0,
-  category: ''
+  stock: 0
 })
 
 const errors = reactive<Record<string, string>>({})
