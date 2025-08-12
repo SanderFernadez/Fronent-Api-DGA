@@ -54,7 +54,7 @@
           <p class="mt-3 text-muted">Cargando clientes...</p>
         </div>
         
-        <div v-else-if="clients.length === 0" class="text-center py-5">
+        <div v-else-if="(clients as any)?.length === 0" class="text-center py-5">
           <i class="fas fa-users fa-3x text-muted mb-3"></i>
           <h5 class="text-muted">No hay clientes registrados</h5>
           <p class="text-muted">Comienza agregando tu primer cliente</p>
@@ -85,7 +85,7 @@
                     </div>
                                          <div>
                        <h6 class="mb-0">{{ client.name }}</h6>
-                       <small class="text-muted">{{ (client as any).address || 'Sin dirección' }}</small>
+                                               <small class="text-muted">Cliente</small>
                      </div>
                   </div>
                 </td>
@@ -122,7 +122,7 @@
         <div class="row align-items-center">
           <div class="col-md-6">
             <small class="text-muted">
-              Mostrando {{ clients.length }} cliente{{ clients.length !== 1 ? 's' : '' }}
+              Mostrando {{ (clients as any)?.length || 0 }} cliente{{ ((clients as any)?.length || 0) !== 1 ? 's' : '' }}
             </small>
           </div>
           <div class="col-md-6 text-md-end">

@@ -76,7 +76,7 @@
           <p class="mt-3 text-muted">Cargando ventas...</p>
         </div>
         
-        <div v-else-if="sales.length === 0" class="text-center py-5">
+        <div v-else-if="(sales as any)?.length === 0" class="text-center py-5">
           <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
           <h5 class="text-muted">No hay ventas registradas</h5>
           <p class="text-muted">Comienza registrando tu primera venta</p>
@@ -123,7 +123,7 @@
                 </td>
                 <td>
                   <div class="d-flex align-items-center">
-                    <span class="badge bg-info me-2">{{ sale.saleProducts.length }}</span>
+                    <span class="badge bg-info me-2">{{ sale.saleProducts?.length || 0 }}</span>
                     <small class="text-muted">productos</small>
                   </div>
                 </td>
@@ -148,7 +148,7 @@
         <div class="row align-items-center">
           <div class="col-md-6">
             <small class="text-muted">
-              Mostrando {{ sales.length }} venta{{ sales.length !== 1 ? 's' : '' }}
+              Mostrando {{ (sales as any)?.length || 0 }} venta{{ ((sales as any)?.length || 0) !== 1 ? 's' : '' }}
             </small>
           </div>
           <div class="col-md-6 text-md-end">
@@ -221,7 +221,7 @@ const getClientName = (clientId: number) => {
 // Ver detalles de la venta
 const viewSaleDetails = (sale: Sale) => {
   console.log('Ver detalles de venta:', sale)
-  alert(`Detalles de la venta #${sale.id}\nCliente: ${getClientName(sale.clientId)}\nTotal: $${sale.total.toFixed(2)}\nProductos: ${sale.saleProducts.length}`)
+  alert(`Detalles de la venta #${sale.id}\nCliente: ${getClientName(sale.clientId)}\nTotal: $${sale.total.toFixed(2)}\nProductos: ${sale.saleProducts?.length || 0}`)
 }
 
 // Eliminar venta

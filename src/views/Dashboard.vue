@@ -97,7 +97,7 @@
             </h5>
           </div>
           <div class="card-body">
-            <div v-if="lowStockProducts.length > 0">
+            <div v-if="(lowStockProducts as any)?.length > 0">
               <div v-for="product in lowStockProducts.slice(0, 5)" :key="product.id" class="alert alert-warning alert-sm mb-2">
                 <div class="d-flex justify-content-between align-items-start">
                   <div>
@@ -125,7 +125,7 @@
             </h5>
           </div>
           <div class="card-body">
-            <div v-if="recentSales.length > 0">
+            <div v-if="(recentSales as any)?.length > 0">
               <div v-for="sale in recentSales.slice(0, 5)" :key="sale.id" class="alert alert-info alert-sm mb-2">
                 <div class="d-flex justify-content-between align-items-start">
                   <div>
@@ -178,14 +178,14 @@ const loadStats = async () => {
     ])
 
     stats.value = {
-      clients: clients.length,
-      products: products.length,
-      sales: sales.length,
-      lowStock: lowStock.length
+      clients: (clients as any).data?.length || clients.length || 0,
+      products: (products as any).data?.length || products.length || 0,
+      sales: (sales as any).data?.length || sales.length || 0,
+      lowStock: (lowStock as any).data?.length || lowStock.length || 0
     }
 
-    lowStockProducts.value = lowStock
-    recentSales.value = sales.slice(0, 5)
+    lowStockProducts.value = (lowStock as any).data || lowStock || []
+    recentSales.value = (sales as any).data?.slice(0, 5) || sales.slice(0, 5) || []
   } catch (error) {
     console.error('Error al cargar estadísticas:', error)
   }

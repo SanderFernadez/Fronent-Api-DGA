@@ -105,21 +105,7 @@
                   </div>
                 </div>
 
-                                 <div class="col-12">
-                   <label for="address" class="form-label">Dirección</label>
-                   <div class="input-group">
-                     <span class="input-group-text">
-                       <i class="fas fa-map-marker-alt"></i>
-                     </span>
-                     <textarea
-                       id="address"
-                       v-model="address"
-                       class="form-control"
-                       placeholder="Ingrese la dirección completa"
-                       rows="3"
-                     ></textarea>
-                   </div>
-                 </div>
+
               </div>
 
               <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
@@ -148,7 +134,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { clientService, type UpdateClientRequest } from '@/services/clientService'
-import { validateForm, isFormValid, clientValidationRules } from '@/utils/validations'
+import { validateForm, validateField as validateFieldUtil, clientValidationRules } from '@/utils/validations'
 import { showErrorMessage } from '@/utils/errorHandler'
 
 const router = useRouter()
@@ -164,18 +150,25 @@ const errors = reactive<Record<string, string>>({})
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
-const address = ref('')
+
 
 const clientId = computed(() => route.params.id as string)
 
 // Validar campo específico
 const validateField = (field: string) => {
-  const fieldErrors = validateForm({ [field]: form[field as keyof UpdateClientRequest] }, { [field]: clientValidationRules[field] })
-  errors[field] = fieldErrors[field] || ''
+  const fieldValue = form[field as keyof UpdateClientRequest]
+  const fieldRules = clientValidationRules[field]
+  if (fieldRules) {
+    const error = validateFieldUtil(fieldValue, fieldRules)
+    errors[field] = error || ''
+  }
 }
 
 // Verificar si el formulario es válido
-const formIsValid = computed(() => isFormValid(form, clientValidationRules))
+const formIsValid = computed(() => {
+  const formErrors = validateForm(form, clientValidationRules)
+  return Object.keys(formErrors).length === 0
+})
 
 // Cargar cliente
 const loadClient = async () => {
@@ -183,7 +176,8 @@ const loadClient = async () => {
     loading.value = true
     error.value = ''
     
-    const client = await clientService.getById(parseInt(clientId.value))
+    const response = await clientService.getById(parseInt(clientId.value))
+    const client = (response as any).data || response
     
     // Llenar el formulario con los datos del cliente
     form.name = client.name

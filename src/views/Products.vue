@@ -59,7 +59,7 @@
           <p class="mt-3 text-muted">Cargando productos...</p>
         </div>
         
-        <div v-else-if="products.length === 0" class="text-center py-5">
+        <div v-else-if="(products as any)?.length === 0" class="text-center py-5">
           <i class="fas fa-box fa-3x text-muted mb-3"></i>
           <h5 class="text-muted">No hay productos registrados</h5>
           <p class="text-muted">Comienza agregando tu primer producto</p>
@@ -129,7 +129,7 @@
         <div class="row align-items-center">
           <div class="col-md-6">
             <small class="text-muted">
-              Mostrando {{ products.length }} producto{{ products.length !== 1 ? 's' : '' }}
+              Mostrando {{ (products as any)?.length || 0 }} producto{{ ((products as any)?.length || 0) !== 1 ? 's' : '' }}
             </small>
           </div>
           <div class="col-md-6 text-md-end">

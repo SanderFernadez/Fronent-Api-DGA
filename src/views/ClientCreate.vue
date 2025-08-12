@@ -90,26 +90,7 @@
                   </div>
                 </div>
 
-                <div class="col-12">
-                  <label for="address" class="form-label">Dirección</label>
-                  <div class="input-group">
-                    <span class="input-group-text">
-                      <i class="fas fa-map-marker-alt"></i>
-                    </span>
-                    <textarea
-                      id="address"
-                      v-model="form.address"
-                      class="form-control"
-                      :class="{ 'is-invalid': errors.address }"
-                      @blur="validateField('address')"
-                      placeholder="Ingrese la dirección completa"
-                      rows="3"
-                    ></textarea>
-                  </div>
-                  <div v-if="errors.address" class="invalid-feedback">
-                    {{ errors.address }}
-                  </div>
-                </div>
+
               </div>
 
               <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
@@ -145,8 +126,7 @@ const router = useRouter()
 const form = reactive<CreateClientRequest>({
   name: '',
   email: '',
-  phone: '',
-  address: ''
+  phone: ''
 })
 
 const errors = reactive<Record<string, string>>({})
