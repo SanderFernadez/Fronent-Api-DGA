@@ -1,85 +1,145 @@
 <template>
-  <div class="client-edit">
-    <div class="page-header">
-      <h1>Editar Cliente</h1>
-      <router-link to="/clients" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Volver a Clientes
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h2 mb-1">Editar Cliente</h1>
+        <p class="text-muted mb-0">Modifica la información del cliente</p>
+      </div>
+      <router-link to="/clients" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver a Clientes
       </router-link>
     </div>
 
-    <div v-if="loading" class="loading-container">
-      <div class="loading">Cargando cliente...</div>
-    </div>
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-transparent border-bottom">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-user-edit me-2 text-primary"></i>Información del Cliente
+            </h5>
+          </div>
+          
+          <div class="card-body">
+            <div v-if="loading" class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+              <p class="mt-3 text-muted">Cargando cliente...</p>
+            </div>
 
-    <div v-else-if="error" class="error-container">
-      <div class="error-message">{{ error }}</div>
-      <button @click="loadClient" class="btn btn-primary">Reintentar</button>
-    </div>
+            <div v-else-if="error" class="text-center py-5">
+              <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+              <h5 class="text-warning">{{ error }}</h5>
+              <button @click="loadClient" class="btn btn-primary mt-3">
+                <i class="fas fa-redo me-2"></i>Reintentar
+              </button>
+            </div>
 
-    <div v-else class="form-container">
-      <form @submit.prevent="updateClient" class="form">
-        <div class="form-group">
-          <label for="name">Nombre *</label>
-          <input
-            id="name"
-            v-model="form.name"
-            type="text"
-            :class="{ 'error': errors.name }"
-            @blur="validateField('name')"
-            placeholder="Ingrese el nombre completo"
-          />
-          <span v-if="errors.name" class="error-message">{{ errors.name }}</span>
+            <form v-else @submit.prevent="updateClient">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label for="name" class="form-label">
+                    Nombre Completo <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    id="name"
+                    v-model="form.name"
+                    type="text"
+                    class="form-control"
+                    :class="{ 'is-invalid': errors.name }"
+                    @blur="validateField('name')"
+                    placeholder="Ingrese el nombre completo"
+                    required
+                  />
+                  <div v-if="errors.name" class="invalid-feedback">
+                    {{ errors.name }}
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="email" class="form-label">
+                    Email <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="fas fa-envelope"></i>
+                    </span>
+                    <input
+                      id="email"
+                      v-model="form.email"
+                      type="email"
+                      class="form-control"
+                      :class="{ 'is-invalid': errors.email }"
+                      @blur="validateField('email')"
+                      placeholder="ejemplo@correo.com"
+                      required
+                    />
+                  </div>
+                  <div v-if="errors.email" class="invalid-feedback">
+                    {{ errors.email }}
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="phone" class="form-label">
+                    Teléfono <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    <span class="input-group-text">
+                      <i class="fas fa-phone"></i>
+                    </span>
+                    <input
+                      id="phone"
+                      v-model="form.phone"
+                      type="tel"
+                      class="form-control"
+                      :class="{ 'is-invalid': errors.phone }"
+                      @blur="validateField('phone')"
+                      placeholder="123-456-7890"
+                      required
+                    />
+                  </div>
+                  <div v-if="errors.phone" class="invalid-feedback">
+                    {{ errors.phone }}
+                  </div>
+                </div>
+
+                                 <div class="col-12">
+                   <label for="address" class="form-label">Dirección</label>
+                   <div class="input-group">
+                     <span class="input-group-text">
+                       <i class="fas fa-map-marker-alt"></i>
+                     </span>
+                     <textarea
+                       id="address"
+                       v-model="address"
+                       class="form-control"
+                       placeholder="Ingrese la dirección completa"
+                       rows="3"
+                     ></textarea>
+                   </div>
+                 </div>
+              </div>
+
+              <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                <router-link to="/clients" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-2"></i>Cancelar
+                </router-link>
+                <button 
+                  type="submit" 
+                  :disabled="!formIsValid || saving" 
+                  class="btn btn-primary"
+                >
+                  <span v-if="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  <i v-else class="fas fa-save me-2"></i>
+                  {{ saving ? 'Guardando...' : 'Actualizar Cliente' }}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <div class="form-group">
-          <label for="email">Email *</label>
-          <input
-            id="email"
-            v-model="form.email"
-            type="email"
-            :class="{ 'error': errors.email }"
-            @blur="validateField('email')"
-            placeholder="ejemplo@correo.com"
-          />
-          <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
-        </div>
-
-        <div class="form-group">
-          <label for="phone">Teléfono *</label>
-          <input
-            id="phone"
-            v-model="form.phone"
-            type="tel"
-            :class="{ 'error': errors.phone }"
-            @blur="validateField('phone')"
-            placeholder="123-456-7890"
-          />
-          <span v-if="errors.phone" class="error-message">{{ errors.phone }}</span>
-        </div>
-
-        <div class="form-group">
-          <label for="address">Dirección</label>
-          <textarea
-            id="address"
-            v-model="form.address"
-            :class="{ 'error': errors.address }"
-            @blur="validateField('address')"
-            placeholder="Ingrese la dirección completa"
-            rows="3"
-          ></textarea>
-          <span v-if="errors.address" class="error-message">{{ errors.address }}</span>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" @click="$router.push('/clients')" class="btn btn-secondary">
-            Cancelar
-          </button>
-          <button type="submit" :disabled="!formIsValid || saving" class="btn btn-primary">
-            <span v-if="saving">Guardando...</span>
-            <span v-else>Actualizar Cliente</span>
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
@@ -97,14 +157,14 @@ const route = useRoute()
 const form = reactive<UpdateClientRequest>({
   name: '',
   email: '',
-  phone: '',
-  address: ''
+  phone: ''
 })
 
 const errors = reactive<Record<string, string>>({})
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
+const address = ref('')
 
 const clientId = computed(() => route.params.id as string)
 
@@ -123,13 +183,12 @@ const loadClient = async () => {
     loading.value = true
     error.value = ''
     
-    const client = await clientService.getById(clientId.value)
+    const client = await clientService.getById(parseInt(clientId.value))
     
     // Llenar el formulario con los datos del cliente
     form.name = client.name
     form.email = client.email
     form.phone = client.phone
-    form.address = client.address || ''
     
   } catch (err) {
     error.value = 'Error al cargar el cliente. Verifique que el ID sea válido.'
@@ -152,7 +211,7 @@ const updateClient = async () => {
       return
     }
 
-    await clientService.update(clientId.value, form)
+    await clientService.update(parseInt(clientId.value), form)
     router.push('/clients')
   } catch (err) {
     showErrorMessage('Error al actualizar el cliente', err)
@@ -167,173 +226,26 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.client-edit {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+.card {
+  transition: box-shadow 0.15s ease-in-out;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
-.page-header h1 {
-  margin: 0;
-  color: #333;
-  font-size: 2rem;
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
-.loading-container,
-.error-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.loading {
-  font-size: 18px;
-  color: #666;
-}
-
-.error-message {
-  color: #dc3545;
-  font-size: 16px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.form-container {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.form {
-  display: grid;
-  gap: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.form-group input,
-.form-group textarea {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-  transition: border-color 0.3s ease;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.form-group input.error,
-.form-group textarea.error {
-  border-color: #dc3545;
-}
-
-.error-message {
-  color: #dc3545;
-  font-size: 14px;
-  margin-top: 5px;
-}
-
-.form-actions {
-  display: flex;
-  gap: 15px;
-  justify-content: flex-end;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
 }
 
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #545b62;
-}
-
-@media (max-width: 768px) {
-  .client-edit {
-    padding: 15px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
-  }
-  
-  .page-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .form-container {
-    padding: 20px;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
 }
 </style>

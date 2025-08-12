@@ -1,134 +1,199 @@
 <template>
-  <div class="sale-create">
-    <div class="page-header">
-      <h1>Crear Nueva Venta</h1>
-      <router-link to="/sales" class="btn btn-secondary">
-        <i class="fas fa-arrow-left"></i> Volver a Ventas
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h2 mb-1">Crear Nueva Venta</h1>
+        <p class="text-muted mb-0">Registra una nueva venta en el sistema</p>
+      </div>
+      <router-link to="/sales" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver a Ventas
       </router-link>
     </div>
 
-    <div class="form-container">
-      <form @submit.prevent="saveSale" class="form">
-        <!-- Selección de Cliente -->
-        <div class="form-group">
-          <label for="clientId">Cliente *</label>
-          <select
-            id="clientId"
-            v-model="form.clientId"
-            :class="{ 'error': errors.clientId }"
-            @blur="validateField('clientId')"
-          >
-            <option value="">Seleccione un cliente</option>
-            <option v-for="client in clients" :key="client.id" :value="client.id">
-              {{ client.name }} - {{ client.email }}
-            </option>
-          </select>
-          <span v-if="errors.clientId" class="error-message">{{ errors.clientId }}</span>
-        </div>
-
-        <!-- Productos -->
-        <div class="products-section">
-          <h3>Productos de la Venta</h3>
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-transparent border-bottom">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-shopping-cart me-2 text-primary"></i>Información de la Venta
+            </h5>
+          </div>
           
-          <div v-for="(product, index) in form.products" :key="index" class="product-item">
-            <div class="product-row">
-              <div class="form-group">
-                <label :for="`productId-${index}`">Producto *</label>
-                <select
-                  :id="`productId-${index}`"
-                  v-model="product.productId"
-                  :class="{ 'error': getProductError(index, 'productId') }"
-                  @change="updateProductPrice(index)"
+          <div class="card-body">
+            <form @submit.prevent="saveSale">
+              <!-- Selección de Cliente -->
+              <div class="row g-3 mb-4">
+                <div class="col-12">
+                  <label for="clientId" class="form-label">
+                    Cliente <span class="text-danger">*</span>
+                  </label>
+                  <select 
+                    id="clientId" 
+                    v-model="form.clientId" 
+                    class="form-select"
+                    :class="{ 'is-invalid': errors.clientId }"
+                    @blur="validateField('clientId')"
+                    required
+                  >
+                    <option value="">Seleccione un cliente</option>
+                    <option v-for="client in clients" :key="client.id" :value="client.id">
+                      {{ client.name }} - {{ client.email }}
+                    </option>
+                  </select>
+                  <div v-if="errors.clientId" class="invalid-feedback">
+                    {{ errors.clientId }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Productos de la Venta -->
+              <div class="products-section mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="mb-0">
+                    <i class="fas fa-box me-2 text-success"></i>Productos de la Venta
+                  </h6>
+                  <button type="button" @click="addProduct" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-plus me-1"></i>Agregar Producto
+                  </button>
+                </div>
+
+                <div v-for="(product, index) in form.products" :key="index" class="card border mb-3">
+                  <div class="card-body">
+                    <div class="row g-3">
+                      <div class="col-md-4">
+                        <label :for="`productId-${index}`" class="form-label">
+                          Producto <span class="text-danger">*</span>
+                        </label>
+                        <select 
+                          :id="`productId-${index}`" 
+                          v-model="product.productId" 
+                          class="form-select"
+                          :class="{ 'is-invalid': getProductError(index, 'productId') }"
+                          @change="updateProductPrice(index)"
+                        >
+                          <option value="">Seleccione un producto</option>
+                          <option v-for="availableProduct in availableProducts" :key="availableProduct.id" :value="availableProduct.id">
+                            {{ availableProduct.name }} - Stock: {{ availableProduct.stock }}
+                          </option>
+                        </select>
+                        <div v-if="getProductError(index, 'productId')" class="invalid-feedback">
+                          {{ getProductError(index, 'productId') }}
+                        </div>
+                      </div>
+
+                      <div class="col-md-2">
+                        <label :for="`quantity-${index}`" class="form-label">
+                          Cantidad <span class="text-danger">*</span>
+                        </label>
+                        <input 
+                          :id="`quantity-${index}`" 
+                          v-model.number="product.quantity" 
+                          type="number" 
+                          min="1" 
+                          class="form-control"
+                          :class="{ 'is-invalid': getProductError(index, 'quantity') }"
+                          @input="updateProductTotal(index)"
+                          placeholder="1"
+                        />
+                        <div v-if="getProductError(index, 'quantity')" class="invalid-feedback">
+                          {{ getProductError(index, 'quantity') }}
+                        </div>
+                      </div>
+
+                      <div class="col-md-2">
+                        <label :for="`price-${index}`" class="form-label">
+                          Precio Unit. <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text">$</span>
+                          <input 
+                            :id="`price-${index}`" 
+                            v-model.number="product.price" 
+                            type="number" 
+                            step="0.01" 
+                            min="0" 
+                            class="form-control"
+                            :class="{ 'is-invalid': getProductError(index, 'price') }"
+                            @input="updateProductTotal(index)"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div v-if="getProductError(index, 'price')" class="invalid-feedback">
+                          {{ getProductError(index, 'price') }}
+                        </div>
+                      </div>
+
+                      <div class="col-md-2">
+                        <label :for="`total-${index}`" class="form-label">Total</label>
+                        <input 
+                          :id="`total-${index}`" 
+                          :value="(product.quantity * product.price).toFixed(2)" 
+                          type="text" 
+                          class="form-control" 
+                          readonly
+                        />
+                      </div>
+
+                      <div class="col-md-2 d-flex align-items-end">
+                        <button 
+                          type="button" 
+                          @click="removeProduct(index)" 
+                          class="btn btn-outline-danger w-100"
+                          :disabled="form.products.length === 1"
+                        >
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Resumen de la Venta -->
+              <div class="summary-section mb-4">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h6 class="card-title mb-3">
+                      <i class="fas fa-calculator me-2 text-info"></i>Resumen de la Venta
+                    </h6>
+                    <div class="row">
+                      <div class="col-md-6">
+                        <div class="d-flex justify-content-between">
+                          <span class="fw-bold">Total de Productos:</span>
+                          <span class="badge bg-primary fs-6">{{ totalProducts }}</span>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="d-flex justify-content-between">
+                          <span class="fw-bold">Total de la Venta:</span>
+                          <span class="fs-5 fw-bold text-success">${{ totalAmount.toFixed(2) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botones de Acción -->
+              <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+                <router-link to="/sales" class="btn btn-outline-secondary">
+                  <i class="fas fa-times me-2"></i>Cancelar
+                </router-link>
+                <button 
+                  type="submit" 
+                  :disabled="!formIsValid || loading" 
+                  class="btn btn-primary"
                 >
-                  <option value="">Seleccione un producto</option>
-                  <option v-for="availableProduct in availableProducts" :key="availableProduct.id" :value="availableProduct.id">
-                    {{ availableProduct.name }} - Stock: {{ availableProduct.stock }}
-                  </option>
-                </select>
-                <span v-if="getProductError(index, 'productId')" class="error-message">{{ getProductError(index, 'productId') }}</span>
+                  <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  <i v-else class="fas fa-save me-2"></i>
+                  {{ loading ? 'Guardando...' : 'Crear Venta' }}
+                </button>
               </div>
-
-              <div class="form-group">
-                <label :for="`quantity-${index}`">Cantidad *</label>
-                <input
-                  :id="`quantity-${index}`"
-                  v-model.number="product.quantity"
-                  type="number"
-                  min="1"
-                  :class="{ 'error': getProductError(index, 'quantity') }"
-                  @input="updateProductTotal(index)"
-                  placeholder="1"
-                />
-                <span v-if="getProductError(index, 'quantity')" class="error-message">{{ getProductError(index, 'quantity') }}</span>
-              </div>
-
-              <div class="form-group">
-                <label :for="`price-${index}`">Precio Unitario *</label>
-                <input
-                  :id="`price-${index}`"
-                  v-model.number="product.price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  :class="{ 'error': getProductError(index, 'price') }"
-                  @input="updateProductTotal(index)"
-                  placeholder="0.00"
-                />
-                <span v-if="getProductError(index, 'price')" class="error-message">{{ getProductError(index, 'price') }}</span>
-              </div>
-
-              <div class="form-group">
-                <label :for="`total-${index}`">Total</label>
-                <input
-                  :id="`total-${index}`"
-                  :value="(product.quantity * product.price).toFixed(2)"
-                  type="text"
-                  readonly
-                  class="readonly"
-                />
-              </div>
-
-              <button
-                type="button"
-                @click="removeProduct(index)"
-                class="btn btn-danger btn-small"
-                :disabled="form.products.length === 1"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <button type="button" @click="addProduct" class="btn btn-secondary btn-add">
-            <i class="fas fa-plus"></i> Agregar Producto
-          </button>
-        </div>
-
-        <!-- Resumen -->
-        <div class="summary-section">
-          <h3>Resumen de la Venta</h3>
-          <div class="summary-grid">
-            <div class="summary-item">
-              <span class="summary-label">Total de Productos:</span>
-              <span class="summary-value">{{ totalProducts }}</span>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">Total de la Venta:</span>
-              <span class="summary-value">${{ totalAmount.toFixed(2) }}</span>
-            </div>
+            </form>
           </div>
         </div>
-
-        <div class="form-actions">
-          <button type="button" @click="$router.push('/sales')" class="btn btn-secondary">
-            Cancelar
-          </button>
-          <button type="submit" :disabled="!formIsValid || loading" class="btn btn-primary">
-            <span v-if="loading">Guardando...</span>
-            <span v-else>Crear Venta</span>
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
@@ -167,9 +232,8 @@ const loadInitialData = async () => {
       clientService.getAll(),
       productService.getAll()
     ])
-    
-    clients.value = clientsData
-    availableProducts.value = productsData
+    clients.value = (clientsData as any).data || clientsData
+    availableProducts.value = (productsData as any).data || productsData
   } catch (error) {
     showErrorMessage('Error al cargar los datos iniciales', error)
   }
@@ -183,13 +247,9 @@ const validateField = (field: string) => {
 
 // Verificar si el formulario es válido
 const formIsValid = computed(() => {
-  // Validar cliente
   if (!form.clientId) return false
-  
-  // Validar productos
   if (form.products.length === 0) return false
-  
-  return form.products.every(product => 
+  return form.products.every(product =>
     product.productId && product.quantity > 0 && product.price > 0
   )
 })
@@ -214,7 +274,6 @@ const removeProduct = (index: number) => {
 const updateProductPrice = (index: number) => {
   const product = form.products[index]
   const selectedProduct = availableProducts.value.find(p => p.id === product.productId)
-  
   if (selectedProduct) {
     product.price = selectedProduct.price
   }
@@ -222,26 +281,21 @@ const updateProductPrice = (index: number) => {
 
 // Actualizar total del producto
 const updateProductTotal = (index: number) => {
-  const product = form.products[index]
-  // El total se calcula automáticamente en el template
+  // Total calculado automáticamente en el template
 }
 
-// Obtener error de un producto específico
+// Obtener error de producto específico
 const getProductError = (index: number, field: string): string => {
   const product = form.products[index]
-  
   if (field === 'productId' && !product.productId) {
     return 'Seleccione un producto'
   }
-  
   if (field === 'quantity' && (!product.quantity || product.quantity <= 0)) {
     return 'La cantidad debe ser mayor a 0'
   }
-  
   if (field === 'price' && (!product.price || product.price <= 0)) {
     return 'El precio debe ser mayor a 0'
   }
-  
   return ''
 }
 
@@ -260,17 +314,14 @@ const saveSale = async () => {
   try {
     loading.value = true
     
-    // Validar cliente
     if (!form.clientId) {
       errors.clientId = 'Seleccione un cliente'
       return
     }
     
-    // Validar productos
-    const productErrors = form.products.some(product => 
+    const productErrors = form.products.some(product =>
       !product.productId || product.quantity <= 0 || product.price <= 0
     )
-    
     if (productErrors) {
       return
     }
@@ -290,176 +341,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.sale-create {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
+.card {
+  transition: box-shadow 0.15s ease-in-out;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e0e0e0;
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
-.page-header h1 {
-  margin: 0;
-  color: #333;
-  font-size: 2rem;
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
-.form-container {
-  background: white;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.form {
-  display: grid;
-  gap: 30px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.form-group input,
-.form-group select {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-  transition: border-color 0.3s ease;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.form-group input.error,
-.form-group select.error {
-  border-color: #dc3545;
-}
-
-.form-group input.readonly {
+.input-group-text {
   background-color: #f8f9fa;
-  cursor: not-allowed;
-}
-
-.error-message {
-  color: #dc3545;
-  font-size: 14px;
-  margin-top: 5px;
-}
-
-.products-section {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
-  background-color: #f8f9fa;
-}
-
-.products-section h3 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 1.2rem;
-}
-
-.product-item {
-  margin-bottom: 20px;
-  padding: 15px;
-  background: white;
-  border-radius: 6px;
-  border: 1px solid #e0e0e0;
-}
-
-.product-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
-  gap: 15px;
-  align-items: end;
-}
-
-.btn-add {
-  margin-top: 15px;
-  width: 100%;
-}
-
-.summary-section {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
-  background-color: #f8f9fa;
-}
-
-.summary-section h3 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 1.2rem;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.summary-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-}
-
-.summary-label {
-  font-weight: 600;
-  color: #333;
-}
-
-.summary-value {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #007bff;
-}
-
-.form-actions {
-  display: flex;
-  gap: 15px;
-  justify-content: flex-end;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
+  border-color: #dee2e6;
 }
 
 .btn:disabled {
@@ -467,73 +365,12 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-.btn-small {
-  padding: 8px 12px;
-  font-size: 14px;
+.products-section .card {
+  border: 1px solid #dee2e6;
 }
 
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background-color: #545b62;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background-color: #c82333;
-}
-
-@media (max-width: 768px) {
-  .sale-create {
-    padding: 15px;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    gap: 15px;
-    align-items: flex-start;
-  }
-  
-  .page-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .form-container {
-    padding: 20px;
-  }
-  
-  .product-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
+.summary-section .card {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
 }
 </style>
