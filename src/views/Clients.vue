@@ -6,9 +6,9 @@
           <h1 class="card-title">Gestión de Clientes</h1>
           <p class="text-gray-600">Administra los clientes del sistema</p>
         </div>
-        <button @click="showForm = true" class="btn btn-primary">
-          Nuevo Cliente
-        </button>
+        <router-link to="/clients/create" class="btn btn-primary">
+          <i class="fas fa-plus"></i> Nuevo Cliente
+        </router-link>
       </div>
     </div>
 
@@ -59,11 +59,11 @@
               <td>{{ client.phone }}</td>
               <td>
                 <div class="flex space-x-2">
-                  <button @click="editClient(client)" class="btn btn-secondary">
-                    Editar
-                  </button>
+                  <router-link :to="`/clients/${client.id}/edit`" class="btn btn-secondary">
+                    <i class="fas fa-edit"></i> Editar
+                  </router-link>
                   <button @click="deleteClient(client.id)" class="btn btn-danger">
-                    Eliminar
+                    <i class="fas fa-trash"></i> Eliminar
                   </button>
                 </div>
               </td>
@@ -73,86 +73,18 @@
       </div>
     </div>
 
-    <!-- Modal de formulario -->
-    <div v-if="showForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-lg font-semibold mb-4">
-          {{ isEditing ? 'Editar Cliente' : 'Nuevo Cliente' }}
-        </h3>
-        
-        <form @submit.prevent="saveClient">
-          <div class="form-group">
-            <label class="form-label">Nombre *</label>
-            <input 
-              v-model="form.name" 
-              type="text" 
-              required 
-              class="form-input"
-              :class="{ error: errors.name }"
-            >
-            <span v-if="errors.name" class="error-message">{{ errors.name }}</span>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Email *</label>
-            <input 
-              v-model="form.email" 
-              type="email" 
-              required 
-              class="form-input"
-              :class="{ error: errors.email }"
-            >
-            <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Teléfono *</label>
-            <input 
-              v-model="form.phone" 
-              type="tel" 
-              required 
-              class="form-input"
-              :class="{ error: errors.phone }"
-            >
-            <span v-if="errors.phone" class="error-message">{{ errors.phone }}</span>
-          </div>
-          
-          <div class="flex space-x-2 mt-6">
-            <button type="submit" class="btn btn-primary flex-1">
-              {{ isEditing ? 'Actualizar' : 'Crear' }}
-            </button>
-            <button type="button" @click="closeForm" class="btn btn-secondary">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { clientService, type Client, type CreateClientRequest, type UpdateClientRequest } from '@/services/clientService'
-import { validateForm, isFormValid, clientValidationRules } from '@/utils/validations'
+import { clientService, type Client } from '@/services/clientService'
 
 // Estado reactivo
 const clients = ref<Client[]>([])
 const loading = ref(false)
-const showForm = ref(false)
-const isEditing = ref(false)
-const editingId = ref<number | null>(null)
 const searchTerm = ref('')
-
-// Formulario
-const form = ref<CreateClientRequest>({
-  name: '',
-  email: '',
-  phone: ''
-})
-
-// Errores de validación
-const errors = ref<Record<string, string>>({})
 
 // Cargar clientes
 const loadClients = async () => {
@@ -186,42 +118,7 @@ const searchClients = async () => {
   }
 }
 
-// Validar formulario
-const validateFormData = (): boolean => {
-  errors.value = validateForm(form.value, clientValidationRules)
-  return isFormValid(errors.value)
-}
 
-// Guardar cliente
-const saveClient = async () => {
-  if (!validateFormData()) return
-  
-  try {
-    if (isEditing.value && editingId.value) {
-      const response = await clientService.update(editingId.value, form.value as UpdateClientRequest)
-      if (response.success) {
-        await loadClients()
-        closeForm()
-      }
-    } else {
-      const response = await clientService.create(form.value)
-      if (response.success) {
-        await loadClients()
-        closeForm()
-      }
-    }
-  } catch (error) {
-    console.error('Error al guardar cliente:', error)
-  }
-}
-
-// Editar cliente
-const editClient = (client: Client) => {
-  form.value = { ...client }
-  isEditing.value = true
-  editingId.value = client.id
-  showForm.value = true
-}
 
 // Eliminar cliente
 const deleteClient = async (id: number) => {
@@ -237,14 +134,7 @@ const deleteClient = async (id: number) => {
   }
 }
 
-// Cerrar formulario
-const closeForm = () => {
-  showForm.value = false
-  isEditing.value = false
-  editingId.value = null
-  form.value = { name: '', email: '', phone: '' }
-  errors.value = {}
-}
+
 
 // Cargar datos al montar el componente
 onMounted(() => {
