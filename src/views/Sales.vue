@@ -95,8 +95,8 @@
                       </div>
                     </div>
                     <div>
-                      <h6 class="mb-0">{{ sale.client?.name || 'Cliente no disponible' }}</h6>
-                      <small class="text-muted">{{ sale.client?.email || 'Email no disponible' }}</small>
+                      <h6 class="mb-0">{{ getClientInfo(sale)?.name || 'Cliente no disponible' }}</h6>
+                      <small class="text-muted">{{ getClientInfo(sale)?.email || 'Email no disponible' }}</small>
                     </div>
                   </div>
                 </td>
@@ -109,7 +109,7 @@
                 <td>
                   <div>
                     <span class="badge bg-light text-dark me-1">
-                      {{ sale.saleProducts?.length || sale.products?.length || 0 }} productos
+                      {{ getProductCount(sale) }} productos
                     </span>
                     <small class="text-muted d-block">
                       {{ getTotalItems(sale) }} unidades
@@ -169,11 +169,12 @@ const filters = ref({
   endDate: ''
 })
 
-// Cargar ventas
+// Cargar ventas con productos y clientes
 const loadSales = async () => {
   loading.value = true
   try {
-    const response = await saleService.getAll()
+    // Cargar ventas con productos usando el método que funciona
+    const response = await saleService.getAllSalesWithProducts()
     sales.value = (response as any).data || response
   } catch (error) {
     console.error('Error al cargar ventas:', error)
@@ -194,8 +195,15 @@ const filterSales = async () => {
     const startDate = filters.value.startDate || new Date(0).toISOString().split('T')[0]
     const endDate = filters.value.endDate || new Date().toISOString().split('T')[0]
     
-    const response = await saleService.getByDateRange(startDate, endDate)
-    sales.value = (response as any).data || response
+    // Cargar todas las ventas con productos
+    const response = await saleService.getAllSalesWithProducts()
+    const allSales = (response as any).data || response
+    
+    // Filtrar por fecha en el frontend
+    sales.value = allSales.filter((sale: Sale) => {
+      const saleDate = new Date(sale.date).toISOString().split('T')[0]
+      return saleDate >= startDate && saleDate <= endDate
+    })
   } catch (error) {
     console.error('Error al filtrar ventas:', error)
   } finally {
@@ -249,15 +257,26 @@ const formatCurrency = (amount: number): string => {
   })
 }
 
+// Obtener información del cliente para una venta
+const getClientInfo = (sale: Sale) => {
+  return sale.client || null
+}
+
+// Obtener productos de una venta
+const getSaleProducts = (sale: Sale) => {
+  return sale.products || sale.saleProducts || []
+}
+
 // Obtener total de items en una venta
 const getTotalItems = (sale: Sale): number => {
-  if (sale.saleProducts) {
-    return sale.saleProducts.reduce((total, item) => total + item.quantity, 0)
-  }
-  if (sale.products) {
-    return sale.products.reduce((total, item) => total + item.quantity, 0)
-  }
-  return 0
+  const saleProducts = getSaleProducts(sale)
+  return saleProducts.reduce((total, item) => total + (item.quantity || 0), 0)
+}
+
+// Obtener cantidad de productos en una venta
+const getProductCount = (sale: Sale): number => {
+  const saleProducts = getSaleProducts(sale)
+  return saleProducts.length
 }
 
 // Obtener total de todas las ventas

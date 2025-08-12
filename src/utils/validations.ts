@@ -78,8 +78,8 @@ export const productValidationRules: ValidationRules = {
 export const saleValidationRules: ValidationRules = {
   clientId: {
     required: true,
-    custom: (value: number) => {
-      if (!value || value === 0) {
+    custom: (value: any) => {
+      if (!value || value === '' || value === 0) {
         return 'Debe seleccionar un cliente'
       }
       return null
@@ -88,7 +88,7 @@ export const saleValidationRules: ValidationRules = {
   date: {
     required: true
   },
-  saleProducts: {
+  products: {
     required: true,
     custom: (value: any[]) => {
       if (!value || value.length === 0) {

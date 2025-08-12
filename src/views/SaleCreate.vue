@@ -247,10 +247,18 @@ const validateField = (field: string) => {
 
 // Verificar si el formulario es válido
 const formIsValid = computed(() => {
-  if (!form.clientId) return false
+  // Validar cliente
+  if (!form.clientId || form.clientId === '') return false
+  
+  // Validar productos
   if (form.products.length === 0) return false
+  
+  // Validar que todos los productos tengan datos válidos
   return form.products.every(product =>
-    product.productId && product.quantity > 0 && product.price > 0
+    product.productId && 
+    product.productId !== '' && 
+    product.quantity > 0 && 
+    product.price > 0
   )
 })
 
@@ -273,7 +281,7 @@ const removeProduct = (index: number) => {
 // Actualizar precio del producto
 const updateProductPrice = (index: number) => {
   const product = form.products[index]
-  const selectedProduct = availableProducts.value.find(p => p.id === product.productId)
+  const selectedProduct = availableProducts.value.find(p => p.id === parseInt(product.productId as string))
   if (selectedProduct) {
     product.price = selectedProduct.price
   }
@@ -287,7 +295,7 @@ const updateProductTotal = (index: number) => {
 // Obtener error de producto específico
 const getProductError = (index: number, field: string): string => {
   const product = form.products[index]
-  if (field === 'productId' && !product.productId) {
+  if (field === 'productId' && (!product.productId || product.productId === '')) {
     return 'Seleccione un producto'
   }
   if (field === 'quantity' && (!product.quantity || product.quantity <= 0)) {
@@ -314,13 +322,17 @@ const saveSale = async () => {
   try {
     loading.value = true
     
-    if (!form.clientId) {
-      errors.clientId = 'Seleccione un cliente'
+    // Validar formulario completo
+    const formErrors = validateForm(form, saleValidationRules)
+    Object.assign(errors, formErrors)
+    
+    if (Object.keys(formErrors).length > 0) {
       return
     }
     
+    // Validar productos individualmente
     const productErrors = form.products.some(product =>
-      !product.productId || product.quantity <= 0 || product.price <= 0
+      !product.productId || product.productId === '' || product.quantity <= 0 || product.price <= 0
     )
     if (productErrors) {
       return
