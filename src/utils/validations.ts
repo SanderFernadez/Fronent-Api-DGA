@@ -160,10 +160,12 @@ export const validateForm = (data: any, rules: ValidationRules): Record<string, 
 
 /**
  * Valida si un formulario es válido
- * @param errors - Objeto de errores
- * @returns true si no hay errores
+ * @param data - Datos del formulario
+ * @param rules - Reglas de validación
+ * @returns true si el formulario es válido
  */
-export const isFormValid = (errors: Record<string, string>): boolean => {
+export const isFormValid = (data: any, rules: ValidationRules): boolean => {
+  const errors = validateForm(data, rules)
   return Object.keys(errors).length === 0
 }
 
