@@ -33,3 +33,4 @@ export const getApiUrl = (endpoint: string): string => {
 export const isDevelopment = (): boolean => {
   return environment.isDevelopment
 }
+

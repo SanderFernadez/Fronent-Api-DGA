@@ -197,3 +197,4 @@ export const handleAndShowError = (error: any): void => {
   const appError = handleError(error)
   showErrorMessage(appError)
 }
+

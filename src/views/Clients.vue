@@ -103,10 +103,13 @@
                 </td>
                 <td>
                   <div class="d-flex justify-content-center gap-2">
-                    <router-link :to="`/clients/${client.id}/edit`" class="btn btn-sm btn-outline-primary">
+                    <router-link :to="`/clients/${client.id}/products`" class="btn btn-sm btn-outline-info" title="Ver productos">
+                      <i class="fas fa-shopping-bag"></i>
+                    </router-link>
+                    <router-link :to="`/clients/${client.id}/edit`" class="btn btn-sm btn-outline-primary" title="Editar">
                       <i class="fas fa-edit"></i>
                     </router-link>
-                    <button @click="deleteClient(client.id)" class="btn btn-sm btn-outline-danger">
+                    <button @click="deleteClient(client.id)" class="btn btn-sm btn-outline-danger" title="Eliminar">
                       <i class="fas fa-trash"></i>
                     </button>
                   </div>

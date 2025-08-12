@@ -60,3 +60,4 @@ export const productService = {
     return await api.get('/products/low-stock')
   }
 }
+

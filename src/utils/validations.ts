@@ -166,3 +166,4 @@ export const validateForm = (data: any, rules: ValidationRules): Record<string, 
 export const isFormValid = (errors: Record<string, string>): boolean => {
   return Object.keys(errors).length === 0
 }
+

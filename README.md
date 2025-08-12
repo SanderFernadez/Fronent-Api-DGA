@@ -59,8 +59,8 @@ src/
 
 2. **Instalar dependencias**
    ```bash
-   npm install
-   ```
+npm install
+```
 
 3. **Configurar la API**
    - Asegúrate de que la API backend esté ejecutándose en `https://localhost:7067`
@@ -68,8 +68,8 @@ src/
 
 4. **Ejecutar en modo desarrollo**
    ```bash
-   npm run dev
-   ```
+npm run dev
+```
 
 5. **Abrir en el navegador**
    - La aplicación estará disponible en `http://localhost:5173`
