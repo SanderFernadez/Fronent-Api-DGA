@@ -30,7 +30,7 @@
                   </label>
                   <select 
                     id="clientId" 
-                    v-model="form.clientId" 
+                    v-model.number="form.clientId" 
                     class="form-select"
                     :class="{ 'is-invalid': errors.clientId }"
                     @blur="validateField('clientId')"
@@ -58,7 +58,7 @@
                   </button>
                 </div>
 
-                <div v-for="(product, index) in form.products" :key="index" class="card border mb-3">
+                <div v-for="(product, index) in (form.saleProducts || [])" :key="index" class="card border mb-3">
                   <div class="card-body">
                     <div class="row g-3">
                       <div class="col-md-4">
@@ -67,7 +67,7 @@
                         </label>
                         <select 
                           :id="`productId-${index}`" 
-                          v-model="product.productId" 
+                          v-model.number="product.productId" 
                           class="form-select"
                           :class="{ 'is-invalid': getProductError(index, 'productId') }"
                           @change="updateProductPrice(index)"
@@ -140,7 +140,7 @@
                           type="button" 
                           @click="removeProduct(index)" 
                           class="btn btn-outline-danger w-100"
-                          :disabled="form.products.length === 1"
+                          :disabled="(form.saleProducts || []).length === 1"
                         >
                           <i class="fas fa-trash"></i>
                         </button>
@@ -184,6 +184,7 @@
                   type="submit" 
                   :disabled="!formIsValid || loading" 
                   class="btn btn-primary"
+                  @click="console.log('formIsValid:', formIsValid, 'loading:', loading)"
                 >
                   <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                   <i v-else class="fas fa-save me-2"></i>
@@ -210,10 +211,11 @@ import { showErrorMessage } from '@/utils/errorHandler'
 const router = useRouter()
 
 const form = reactive<CreateSaleRequest>({
-  clientId: '',
-  products: [
+  clientId: 0,
+  date: new Date().toISOString(),
+  saleProducts: [
     {
-      productId: '',
+      productId: 0,
       quantity: 1,
       price: 0
     }
@@ -235,7 +237,7 @@ const loadInitialData = async () => {
     clients.value = (clientsData as any).data || clientsData
     availableProducts.value = (productsData as any).data || productsData
   } catch (error) {
-    showErrorMessage('Error al cargar los datos iniciales', error)
+    console.error('Error al cargar los datos iniciales:', error)
   }
 }
 
@@ -247,25 +249,50 @@ const validateField = (field: string) => {
 
 // Verificar si el formulario es válido
 const formIsValid = computed(() => {
+  console.log('Validando formulario:', {
+    clientId: form.clientId,
+    clientIdType: typeof form.clientId,
+    saleProducts: form.saleProducts,
+    saleProductsLength: form.saleProducts?.length
+  })
+  
   // Validar cliente
-  if (!form.clientId || form.clientId === '') return false
+  if (!form.clientId || form.clientId === 0) {
+    console.log('Cliente inválido')
+    return false
+  }
   
   // Validar productos
-  if (form.products.length === 0) return false
+  if (!form.saleProducts || form.saleProducts.length === 0) {
+    console.log('No hay productos')
+    return false
+  }
   
   // Validar que todos los productos tengan datos válidos
-  return form.products.every(product =>
-    product.productId && 
-    product.productId !== '' && 
-    product.quantity > 0 && 
-    product.price > 0
-  )
+  const allProductsValid = form.saleProducts.every((product, index) => {
+    const isValid = product.productId && 
+      product.productId > 0 && 
+      product.quantity > 0 && 
+      product.price > 0
+    
+    if (!isValid) {
+      console.log(`Producto ${index} inválido:`, product)
+    }
+    
+    return isValid
+  })
+  
+  console.log('Todos los productos válidos:', allProductsValid)
+  return allProductsValid
 })
 
 // Agregar producto
 const addProduct = () => {
-  form.products.push({
-    productId: '',
+  if (!form.saleProducts) {
+    form.saleProducts = []
+  }
+  form.saleProducts.push({
+    productId: 0,
     quantity: 1,
     price: 0
   })
@@ -273,15 +300,17 @@ const addProduct = () => {
 
 // Remover producto
 const removeProduct = (index: number) => {
-  if (form.products.length > 1) {
-    form.products.splice(index, 1)
+  if (form.saleProducts && form.saleProducts.length > 1) {
+    form.saleProducts.splice(index, 1)
   }
 }
 
 // Actualizar precio del producto
 const updateProductPrice = (index: number) => {
-  const product = form.products[index]
-  const selectedProduct = availableProducts.value.find(p => p.id === parseInt(product.productId as string))
+  if (!form.saleProducts || !form.saleProducts[index]) return
+  
+  const product = form.saleProducts[index]
+  const selectedProduct = availableProducts.value.find(p => p.id === product.productId)
   if (selectedProduct) {
     product.price = selectedProduct.price
   }
@@ -294,8 +323,12 @@ const updateProductTotal = (index: number) => {
 
 // Obtener error de producto específico
 const getProductError = (index: number, field: string): string => {
-  const product = form.products[index]
-  if (field === 'productId' && (!product.productId || product.productId === '')) {
+  if (!form.saleProducts || !form.saleProducts[index]) {
+    return ''
+  }
+  
+  const product = form.saleProducts[index]
+  if (field === 'productId' && (!product.productId || product.productId === 0)) {
     return 'Seleccione un producto'
   }
   if (field === 'quantity' && (!product.quantity || product.quantity <= 0)) {
@@ -309,12 +342,14 @@ const getProductError = (index: number, field: string): string => {
 
 // Total de productos
 const totalProducts = computed(() => {
-  return form.products.reduce((total, product) => total + product.quantity, 0)
+  if (!form.saleProducts) return 0
+  return form.saleProducts.reduce((total, product) => total + product.quantity, 0)
 })
 
 // Total de la venta
 const totalAmount = computed(() => {
-  return form.products.reduce((total, product) => total + (product.quantity * product.price), 0)
+  if (!form.saleProducts) return 0
+  return form.saleProducts.reduce((total, product) => total + (product.quantity * product.price), 0)
 })
 
 // Guardar venta
@@ -331,17 +366,21 @@ const saveSale = async () => {
     }
     
     // Validar productos individualmente
-    const productErrors = form.products.some(product =>
-      !product.productId || product.productId === '' || product.quantity <= 0 || product.price <= 0
+    const productErrors = form.saleProducts && form.saleProducts.some(product =>
+      !product.productId || product.productId === 0 || product.quantity <= 0 || product.price <= 0
     )
     if (productErrors) {
       return
     }
 
+    // Log para depuración - ver qué datos se envían
+    console.log('Datos a enviar al backend:', JSON.stringify(form))
+    console.log('saleProducts:', form.saleProducts)
+
     await saleService.create(form)
     router.push('/sales')
   } catch (error) {
-    showErrorMessage('Error al crear la venta', error)
+    console.error('Error al crear la venta:', error)
   } finally {
     loading.value = false
   }

@@ -88,7 +88,7 @@ export const saleValidationRules: ValidationRules = {
   date: {
     required: true
   },
-  products: {
+  saleProducts: {
     required: true,
     custom: (value: any[]) => {
       if (!value || value.length === 0) {

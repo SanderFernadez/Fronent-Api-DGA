@@ -4,7 +4,7 @@ import api from './api'
 export interface SaleProduct {
   productId: number
   quantity: number
-  unitPrice: number
+  price: number  // Cambiado de unitPrice a price
   product?: {
     id: number
     name: string
