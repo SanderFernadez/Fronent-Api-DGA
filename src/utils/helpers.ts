@@ -130,3 +130,4 @@ export const calculateTotal = (products: Array<{ quantity: number; unitPrice: nu
     return total + (product.quantity * product.unitPrice)
   }, 0)
 }
+

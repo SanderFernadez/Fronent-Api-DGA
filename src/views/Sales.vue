@@ -4,54 +4,42 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
         <h1 class="h2 mb-1">Gestión de Ventas</h1>
-        <p class="text-muted mb-0">Registra y administra las ventas del sistema</p>
+        <p class="text-muted mb-0">Administra las ventas del sistema</p>
       </div>
       <router-link to="/sales/create" class="btn btn-primary">
         <i class="fas fa-plus me-2"></i>Nueva Venta
       </router-link>
     </div>
 
-    <!-- Filtros de búsqueda -->
+    <!-- Filtros y búsqueda -->
     <div class="card border-0 shadow-sm mb-4">
-      <div class="card-header bg-transparent border-bottom">
-        <h5 class="card-title mb-0">
-          <i class="fas fa-filter me-2 text-primary"></i>Filtros de Búsqueda
-        </h5>
-      </div>
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-4">
-            <label class="form-label">Fecha Inicio</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <i class="fas fa-calendar"></i>
-              </span>
-              <input 
-                v-model="filters.startDate" 
-                type="date" 
-                class="form-control"
-              >
-            </div>
+            <label class="form-label">Fecha desde</label>
+            <input 
+              v-model="filters.startDate" 
+              type="date" 
+              class="form-control"
+              @change="filterSales"
+            >
           </div>
           <div class="col-md-4">
-            <label class="form-label">Fecha Fin</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <i class="fas fa-calendar"></i>
-              </span>
-              <input 
-                v-model="filters.endDate" 
-                type="date" 
-                class="form-control"
-              >
-            </div>
+            <label class="form-label">Fecha hasta</label>
+            <input 
+              v-model="filters.endDate" 
+              type="date" 
+              class="form-control"
+              @change="filterSales"
+            >
           </div>
-          <div class="col-md-4 d-flex align-items-end">
-            <div class="d-flex gap-2 w-100">
-              <button @click="loadSales" class="btn btn-primary flex-fill">
-                <i class="fas fa-search me-2"></i>Buscar
+          <div class="col-md-4">
+            <label class="form-label">&nbsp;</label>
+            <div class="d-flex gap-2">
+              <button @click="loadSales" class="btn btn-outline-secondary flex-fill">
+                <i class="fas fa-sync-alt me-2"></i>Recargar
               </button>
-              <button @click="clearFilters" class="btn btn-outline-secondary">
+              <button @click="clearFilters" class="btn btn-outline-info">
                 <i class="fas fa-times"></i>
               </button>
             </div>
@@ -64,7 +52,7 @@
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-transparent border-bottom">
         <h5 class="card-title mb-0">
-          <i class="fas fa-shopping-cart me-2 text-primary"></i>Historial de Ventas
+          <i class="fas fa-shopping-cart me-2 text-primary"></i>Lista de Ventas
         </h5>
       </div>
       
@@ -79,7 +67,7 @@
         <div v-else-if="(sales as any)?.length === 0" class="text-center py-5">
           <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
           <h5 class="text-muted">No hay ventas registradas</h5>
-          <p class="text-muted">Comienza registrando tu primera venta</p>
+          <p class="text-muted">Comienza agregando tu primera venta</p>
         </div>
         
         <div v-else class="table-responsive">
@@ -89,8 +77,8 @@
                 <th scope="col" class="border-0">ID</th>
                 <th scope="col" class="border-0">Cliente</th>
                 <th scope="col" class="border-0">Fecha</th>
-                <th scope="col" class="border-0">Total</th>
                 <th scope="col" class="border-0">Productos</th>
+                <th scope="col" class="border-0">Total</th>
                 <th scope="col" class="border-0 text-center">Acciones</th>
               </tr>
             </thead>
@@ -102,37 +90,43 @@
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="avatar-sm me-3">
-                      <div class="avatar-title bg-primary bg-opacity-10 rounded-circle">
-                        <i class="fas fa-user text-primary"></i>
+                      <div class="avatar-title bg-info bg-opacity-10 rounded-circle">
+                        <i class="fas fa-user text-info"></i>
                       </div>
                     </div>
                     <div>
-                      <h6 class="mb-0">{{ getClientName(sale.clientId) }}</h6>
-                      <small class="text-muted">Cliente</small>
+                      <h6 class="mb-0">{{ getClientInfo(sale)?.name || 'Cliente no disponible' }}</h6>
+                      <small class="text-muted">{{ getClientInfo(sale)?.email || 'Email no disponible' }}</small>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <div class="fw-bold">{{ formatDate(sale.date) }}</div>
-                    <small class="text-muted">{{ new Date(sale.date).toLocaleTimeString() }}</small>
+                    <div class="fw-medium">{{ formatDate(sale.date) }}</div>
+                    <small class="text-muted">{{ formatTime(sale.date) }}</small>
                   </div>
                 </td>
                 <td>
-                  <span class="fw-bold text-success">${{ sale.total.toFixed(2) }}</span>
+                  <div>
+                    <span class="badge bg-light text-dark me-1">
+                      {{ getProductCount(sale) }} productos
+                    </span>
+                    <small class="text-muted d-block">
+                      {{ getTotalItems(sale) }} unidades
+                    </small>
+                  </div>
                 </td>
                 <td>
-                  <div class="d-flex align-items-center">
-                    <span class="badge bg-info me-2">{{ sale.saleProducts?.length || 0 }}</span>
-                    <small class="text-muted">productos</small>
+                  <div class="fw-bold text-success">
+                    ${{ formatCurrency(sale.total) }}
                   </div>
                 </td>
                 <td>
                   <div class="d-flex justify-content-center gap-2">
-                    <button @click="viewSaleDetails(sale)" class="btn btn-sm btn-outline-info">
+                    <router-link :to="`/sales/${sale.id}`" class="btn btn-sm btn-outline-info" title="Ver detalles">
                       <i class="fas fa-eye"></i>
-                    </button>
-                    <button @click="deleteSale(sale.id)" class="btn btn-sm btn-outline-danger">
+                    </router-link>
+                    <button @click="deleteSale(sale.id)" class="btn btn-sm btn-outline-danger" title="Eliminar">
                       <i class="fas fa-trash"></i>
                     </button>
                   </div>
@@ -153,7 +147,8 @@
           </div>
           <div class="col-md-6 text-md-end">
             <small class="text-muted">
-              Total: ${{ totalSales.toFixed(2) }} | Última actualización: {{ new Date().toLocaleTimeString() }}
+              Total: ${{ formatCurrency(getTotalSales()) }} | 
+              Última actualización: {{ new Date().toLocaleTimeString() }}
             </small>
           </div>
         </div>
@@ -163,30 +158,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { saleService, type Sale } from '@/services/saleService'
-import { clientService, type Client } from '@/services/clientService'
-import { formatDate } from '@/utils/helpers'
 
 // Estado reactivo
 const sales = ref<Sale[]>([])
-const clients = ref<Client[]>([])
 const loading = ref(false)
 const filters = ref({
   startDate: '',
   endDate: ''
 })
 
-// Computed properties
-const totalSales = computed(() => {
-  return sales.value.reduce((total, sale) => total + sale.total, 0)
-})
-
-// Cargar ventas
+// Cargar ventas con productos y clientes
 const loadSales = async () => {
   loading.value = true
   try {
-    const response = await saleService.getAll()
+    // Cargar ventas con productos usando el método que funciona
+    const response = await saleService.getAllSalesWithProducts()
     sales.value = (response as any).data || response
   } catch (error) {
     console.error('Error al cargar ventas:', error)
@@ -195,13 +183,31 @@ const loadSales = async () => {
   }
 }
 
-// Cargar clientes
-const loadClients = async () => {
+// Filtrar ventas por fecha
+const filterSales = async () => {
+  if (!filters.value.startDate && !filters.value.endDate) {
+    await loadSales()
+    return
+  }
+  
+  loading.value = true
   try {
-    const response = await clientService.getAll()
-    clients.value = (response as any).data || response
+    const startDate = filters.value.startDate || new Date(0).toISOString().split('T')[0]
+    const endDate = filters.value.endDate || new Date().toISOString().split('T')[0]
+    
+    // Cargar todas las ventas con productos
+    const response = await saleService.getAllSalesWithProducts()
+    const allSales = (response as any).data || response
+    
+    // Filtrar por fecha en el frontend
+    sales.value = allSales.filter((sale: Sale) => {
+      const saleDate = new Date(sale.date).toISOString().split('T')[0]
+      return saleDate >= startDate && saleDate <= endDate
+    })
   } catch (error) {
-    console.error('Error al cargar clientes:', error)
+    console.error('Error al filtrar ventas:', error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -210,18 +216,6 @@ const clearFilters = () => {
   filters.value.startDate = ''
   filters.value.endDate = ''
   loadSales()
-}
-
-// Obtener nombre del cliente
-const getClientName = (clientId: number) => {
-  const client = clients.value.find(c => c.id === clientId)
-  return client ? client.name : 'Cliente no encontrado'
-}
-
-// Ver detalles de la venta
-const viewSaleDetails = (sale: Sale) => {
-  console.log('Ver detalles de venta:', sale)
-  alert(`Detalles de la venta #${sale.id}\nCliente: ${getClientName(sale.clientId)}\nTotal: $${sale.total.toFixed(2)}\nProductos: ${sale.saleProducts?.length || 0}`)
 }
 
 // Eliminar venta
@@ -238,9 +232,60 @@ const deleteSale = async (id: number) => {
   }
 }
 
+// Formatear fecha
+const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+// Formatear hora
+const formatTime = (dateString: string): string => {
+  return new Date(dateString).toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Formatear moneda
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString('es-ES', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
+// Obtener información del cliente para una venta
+const getClientInfo = (sale: Sale) => {
+  return sale.client || null
+}
+
+// Obtener productos de una venta
+const getSaleProducts = (sale: Sale) => {
+  return sale.products || sale.saleProducts || []
+}
+
+// Obtener total de items en una venta
+const getTotalItems = (sale: Sale): number => {
+  const saleProducts = getSaleProducts(sale)
+  return saleProducts.reduce((total, item) => total + (item.quantity || 0), 0)
+}
+
+// Obtener cantidad de productos en una venta
+const getProductCount = (sale: Sale): number => {
+  const saleProducts = getSaleProducts(sale)
+  return saleProducts.length
+}
+
+// Obtener total de todas las ventas
+const getTotalSales = (): number => {
+  return sales.value.reduce((total, sale) => total + sale.total, 0)
+}
+
 onMounted(() => {
   loadSales()
-  loadClients()
 })
 </script>
 
@@ -279,5 +324,13 @@ onMounted(() => {
 
 .card:hover {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+
+.text-success {
+  color: #198754 !important;
 }
 </style>

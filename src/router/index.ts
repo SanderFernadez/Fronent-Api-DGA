@@ -5,9 +5,11 @@ import Products from '@/views/Products.vue'
 import Sales from '@/views/Sales.vue'
 import ClientCreate from '@/views/ClientCreate.vue'
 import ClientEdit from '@/views/ClientEdit.vue'
+import ClientProducts from '@/views/ClientProducts.vue'
 import ProductCreate from '@/views/ProductCreate.vue'
 import ProductEdit from '@/views/ProductEdit.vue'
 import SaleCreate from '@/views/SaleCreate.vue'
+import SaleDetails from '@/views/SaleDetails.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +37,12 @@ const router = createRouter({
       name: 'client-edit',
       component: ClientEdit,
       meta: { title: 'Editar Cliente' }
+    },
+    {
+      path: '/clients/:id/products',
+      name: 'client-products',
+      component: ClientProducts,
+      meta: { title: 'Productos del Cliente' }
     },
     {
       path: '/products',
@@ -65,6 +73,12 @@ const router = createRouter({
       name: 'sale-create',
       component: SaleCreate,
       meta: { title: 'Crear Venta' }
+    },
+    {
+      path: '/sales/:id',
+      name: 'sale-details',
+      component: SaleDetails,
+      meta: { title: 'Detalles de Venta' }
     }
   ]
 })

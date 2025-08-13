@@ -62,3 +62,4 @@ export const clientService = {
     return await api.get(`/clients/search?name=${name}`)
   }
 }
+
