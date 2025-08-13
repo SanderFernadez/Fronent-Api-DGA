@@ -105,10 +105,10 @@
                   <span class="badge bg-info fs-6">{{ saleProduct.quantity }}</span>
                 </td>
                 <td>
-                  <span class="fw-bold">${{ saleProduct.unitPrice.toFixed(2) }}</span>
+                  <span class="fw-bold">${{ saleProduct.price.toFixed(2) }}</span>
                 </td>
                 <td>
-                  <span class="fw-bold text-success">${{ (saleProduct.quantity * saleProduct.unitPrice).toFixed(2) }}</span>
+                  <span class="fw-bold text-success">${{ (saleProduct.quantity * saleProduct.price).toFixed(2) }}</span>
                 </td>
                 <td>
                   <router-link :to="`/products/${saleProduct.productId}/edit`" class="btn btn-sm btn-outline-primary" title="Ver producto">
@@ -188,29 +188,46 @@ const loadSaleDetails = async () => {
     loading.value = true
     error.value = ''
     
-    // Cargar venta básica
-    const saleResponse = await saleService.getById(saleId.value)
-    sale.value = (saleResponse as any).data || saleResponse
-    
-    // Cargar cliente
-    if (sale.value?.clientId) {
-      const clientResponse = await clientService.getById(sale.value.clientId)
-      client.value = (clientResponse as any).data || clientResponse
-    }
-    
-    // Intentar obtener productos de la venta usando el endpoint de cliente
-    if (sale.value?.clientId) {
-      try {
-        const clientSalesResponse = await saleService.getByClientWithProducts(sale.value.clientId)
-        const clientSales = (clientSalesResponse as any).data || clientSalesResponse
+    // Intentar cargar venta con productos usando el endpoint específico
+    try {
+      const saleWithProductsResponse = await saleService.getSaleWithProducts(saleId.value)
+      const saleWithProducts = (saleWithProductsResponse as any).data || saleWithProductsResponse
+      
+      if (saleWithProducts) {
+        sale.value = saleWithProducts
         
-        // Encontrar la venta específica con productos
-        const saleWithProducts = clientSales.find((s: Sale) => s.id === saleId.value)
-        if (saleWithProducts && saleWithProducts.products) {
-          sale.value.products = saleWithProducts.products
+        // Si la venta incluye información del cliente, usarla
+        if (saleWithProducts.client) {
+          client.value = saleWithProducts.client
         }
-      } catch (error) {
-        console.warn('No se pudieron cargar los productos de la venta:', error)
+      }
+    } catch (error) {
+      console.warn('No se pudo cargar la venta con productos, intentando método alternativo:', error)
+      
+      // Fallback: cargar venta básica y luego productos
+      const saleResponse = await saleService.getById(saleId.value)
+      sale.value = (saleResponse as any).data || saleResponse
+      
+      // Cargar cliente
+      if (sale.value?.clientId) {
+        const clientResponse = await clientService.getById(sale.value.clientId)
+        client.value = (clientResponse as any).data || clientResponse
+      }
+      
+      // Intentar obtener productos de la venta usando el endpoint de cliente
+      if (sale.value?.clientId) {
+        try {
+          const clientSalesResponse = await saleService.getByClientWithProducts(sale.value.clientId)
+          const clientSales = (clientSalesResponse as any).data || clientSalesResponse
+          
+          // Encontrar la venta específica con productos
+          const saleWithProducts = clientSales.find((s: Sale) => s.id === saleId.value)
+          if (saleWithProducts && saleWithProducts.products) {
+            sale.value.products = saleWithProducts.products
+          }
+        } catch (productError) {
+          console.warn('No se pudieron cargar los productos de la venta:', productError)
+        }
       }
     }
     
