@@ -400,3 +400,4 @@ chore: tareas de mantenimiento
 
 **Documentación actualizada**: Agosto 2025
 
+
