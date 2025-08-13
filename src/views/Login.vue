@@ -213,12 +213,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authService, type LoginRequest, type RegisterRequest } from '@/services/authService'
+import { useAuthStore } from '@/stores/authStore'
 import { showErrorMessage } from '@/utils/errorHandler'
 
 const router = useRouter()
+const authStore = useAuthStore()
+
+// Verificar si ya está autenticado al cargar el componente
+onMounted(() => {
+  console.log('=== VERIFICACIÓN DE AUTENTICACIÓN ===')
+  console.log('¿Tiene token válido?:', authService.hasValidToken())
+  console.log('Tokens guardados:', authService.getTokens())
+  console.log('Usuario guardado:', authService.getUser())
+
+  // Si ya está autenticado, redirigir al dashboard
+  if (authService.hasValidToken()) {
+    console.log('Usuario ya autenticado, redirigiendo al dashboard...')
+    router.push('/')
+  }
+})
 
 // Estado reactivo
 const loading = ref(false)
@@ -312,27 +328,14 @@ const handleLogin = async () => {
     loading.value = true
     console.log('Intentando login con credenciales:', { email: form.email, password: '***' })
     console.log('URL de la API:', import.meta.env.VITE_API_URL || 'https://localhost:7067/api')
-    const response = await authService.login(form)
-    console.log('Respuesta completa del login:', response)
-    console.log('Datos de la respuesta:', response.data)
+    const success = await authStore.login(form)
     
-    if (response.data?.success && response.data?.accessToken) {
-      // Guardar tokens y usuario
-      authService.saveTokens(
-        response.data.accessToken,
-        response.data.refreshToken || '',
-        response.data.expiresAt || new Date(Date.now() + 60 * 60 * 1000).toISOString()
-      )
-      
-      if (response.data.user) {
-        authService.saveUser(response.data.user)
-      }
-
-      // Redirigir al dashboard
+    if (success) {
+      console.log('Login exitoso, redirigiendo al dashboard...')
       router.push('/')
     } else {
-      console.error('Respuesta inválida:', response.data)
-      showErrorMessage('Error de autenticación', 'Respuesta inválida del servidor')
+      console.error('Login fallido')
+      showErrorMessage('Error de autenticación', 'Credenciales inválidas')
     }
   } catch (error: any) {
     const message = error.response?.data?.message || 'Error al iniciar sesión'

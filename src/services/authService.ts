@@ -121,18 +121,25 @@ export const authService = {
   // Verificar si el token está expirado
   isTokenExpired(): boolean {
     const expiresAt = localStorage.getItem('tokenExpiresAt')
-    if (!expiresAt) return true
+    if (!expiresAt) {
+      console.log('isTokenExpired - No hay fecha de expiración')
+      return true
+    }
     
     const expirationDate = new Date(expiresAt)
     const now = new Date()
+    const isExpired = now >= expirationDate
     
-    return now >= expirationDate
+    console.log('isTokenExpired - expiresAt:', expiresAt, 'now:', now.toISOString(), 'isExpired:', isExpired)
+    return isExpired
   },
 
   // Verificar si hay un token válido
   hasValidToken(): boolean {
     const { accessToken } = this.getTokens()
-    return !!accessToken && !this.isTokenExpired()
+    const isExpired = this.isTokenExpired()
+    console.log('hasValidToken - accessToken:', !!accessToken, 'isExpired:', isExpired)
+    return !!accessToken && !isExpired
   },
 
   // Guardar información del usuario

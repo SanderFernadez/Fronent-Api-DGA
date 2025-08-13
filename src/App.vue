@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { authService } from '@/services/authService'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
 // Estado del menú móvil
 const mobileMenuOpen = ref(false)
@@ -13,33 +15,25 @@ const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
 }
 
-// Verificar si el usuario está autenticado
-const isAuthenticated = computed(() => authService.hasValidToken())
-
-// Obtener información del usuario
-const currentUser = computed(() => authService.getUser())
-
 // Función para cerrar sesión
 const handleLogout = async () => {
-  try {
-    const { refreshToken } = authService.getTokens()
-    if (refreshToken) {
-      await authService.revokeToken(refreshToken)
-    }
-  } catch (error) {
-    console.warn('Error al revocar token:', error)
-  } finally {
-    // Limpiar tokens y redirigir al login
-    authService.clearTokens()
-    router.push('/login')
-  }
+  await authStore.logout()
+  router.push('/login')
 }
+
+// Verificar si estamos en la página de login
+const isLoginPage = computed(() => route.name === 'login')
+
+// Verificar autenticación al montar el componente
+onMounted(() => {
+  authStore.checkAuth()
+})
 </script>
 
 <template>
   <div id="app">
-    <!-- Header (solo mostrar si está autenticado) -->
-    <header v-if="isAuthenticated" class="bg-primary text-white shadow">
+    <!-- Header (solo mostrar si está autenticado y NO estamos en login) -->
+    <header v-if="authStore.isAuthenticated && !isLoginPage" class="bg-primary text-white shadow">
       <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
           <router-link class="navbar-brand fw-bold" to="/">
@@ -103,17 +97,17 @@ const handleLogout = async () => {
             </ul>
             
             <!-- Información del usuario y logout -->
-            <ul v-if="isAuthenticated" class="navbar-nav">
+            <ul v-if="authStore.isAuthenticated" class="navbar-nav">
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <i class="fas fa-user-circle me-2"></i>
-                  <span class="d-none d-md-inline">{{ currentUser?.name || 'Usuario' }}</span>
+                  <span class="d-none d-md-inline">{{ authStore.currentUser?.name || 'Usuario' }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li>
                     <div class="dropdown-item-text">
-                      <small class="text-muted d-block">{{ currentUser?.email }}</small>
-                      <small class="text-muted">{{ currentUser?.roles?.join(', ') }}</small>
+                      <small class="text-muted d-block">{{ authStore.currentUser?.email }}</small>
+                      <small class="text-muted">{{ authStore.currentUser?.roles?.join(', ') }}</small>
                     </div>
                   </li>
                   <li><hr class="dropdown-divider"></li>
@@ -131,12 +125,12 @@ const handleLogout = async () => {
     </header>
 
     <!-- Contenido principal -->
-    <main class="container py-4">
+    <main :class="{ 'container py-4': !isLoginPage }">
       <router-view />
     </main>
 
-    <!-- Footer (solo mostrar si está autenticado) -->
-    <footer v-if="isAuthenticated" class="bg-light border-top mt-auto">
+    <!-- Footer (solo mostrar si está autenticado y NO estamos en login) -->
+    <footer v-if="authStore.isAuthenticated && !isLoginPage" class="bg-light border-top mt-auto">
       <div class="container py-4">
         <p class="text-center text-muted mb-0">
           © 2025 DGA - Sistema de Gestión de Productos y Ventas
