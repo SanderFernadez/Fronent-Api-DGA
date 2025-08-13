@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { authService } from '@/services/authService'
+
+const router = useRouter()
 
 // Estado del menú móvil
 const mobileMenuOpen = ref(false)
@@ -8,12 +12,34 @@ const mobileMenuOpen = ref(false)
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value
 }
+
+// Verificar si el usuario está autenticado
+const isAuthenticated = computed(() => authService.hasValidToken())
+
+// Obtener información del usuario
+const currentUser = computed(() => authService.getUser())
+
+// Función para cerrar sesión
+const handleLogout = async () => {
+  try {
+    const { refreshToken } = authService.getTokens()
+    if (refreshToken) {
+      await authService.revokeToken(refreshToken)
+    }
+  } catch (error) {
+    console.warn('Error al revocar token:', error)
+  } finally {
+    // Limpiar tokens y redirigir al login
+    authService.clearTokens()
+    router.push('/login')
+  }
+}
 </script>
 
 <template>
   <div id="app">
-    <!-- Header -->
-    <header class="bg-primary text-white shadow">
+    <!-- Header (solo mostrar si está autenticado) -->
+    <header v-if="isAuthenticated" class="bg-primary text-white shadow">
       <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
           <router-link class="navbar-brand fw-bold" to="/">
@@ -33,7 +59,7 @@ const toggleMobileMenu = () => {
           
           <!-- Menú de navegación -->
           <div class="collapse navbar-collapse" :class="{ 'show': mobileMenuOpen }">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav me-auto">
               <li class="nav-item">
                 <router-link 
                   to="/" 
@@ -75,6 +101,30 @@ const toggleMobileMenu = () => {
                 </router-link>
               </li>
             </ul>
+            
+            <!-- Información del usuario y logout -->
+            <ul v-if="isAuthenticated" class="navbar-nav">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="fas fa-user-circle me-2"></i>
+                  <span class="d-none d-md-inline">{{ currentUser?.name || 'Usuario' }}</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <div class="dropdown-item-text">
+                      <small class="text-muted d-block">{{ currentUser?.email }}</small>
+                      <small class="text-muted">{{ currentUser?.roles?.join(', ') }}</small>
+                    </div>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <button @click="handleLogout" class="dropdown-item text-danger">
+                      <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            </ul>
           </div>
         </div>
       </nav>
@@ -85,8 +135,8 @@ const toggleMobileMenu = () => {
       <router-view />
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-light border-top mt-auto">
+    <!-- Footer (solo mostrar si está autenticado) -->
+    <footer v-if="isAuthenticated" class="bg-light border-top mt-auto">
       <div class="container py-4">
         <p class="text-center text-muted mb-0">
           © 2025 DGA - Sistema de Gestión de Productos y Ventas
