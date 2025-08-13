@@ -102,25 +102,25 @@
                       </div>
 
                       <div class="col-md-2">
-                        <label :for="`price-${index}`" class="form-label">
+                        <label :for="`unitPrice-${index}`" class="form-label">
                           Precio Unit. <span class="text-danger">*</span>
                         </label>
                         <div class="input-group">
                           <span class="input-group-text">$</span>
                           <input 
-                            :id="`price-${index}`" 
-                            v-model.number="product.price" 
+                            :id="`unitPrice-${index}`" 
+                            v-model.number="product.unitPrice" 
                             type="number" 
                             step="0.01" 
                             min="0" 
                             class="form-control"
-                            :class="{ 'is-invalid': getProductError(index, 'price') }"
+                            :class="{ 'is-invalid': getProductError(index, 'unitPrice') }"
                             @input="updateProductTotal(index)"
                             placeholder="0.00"
                           />
                         </div>
-                        <div v-if="getProductError(index, 'price')" class="invalid-feedback">
-                          {{ getProductError(index, 'price') }}
+                        <div v-if="getProductError(index, 'unitPrice')" class="invalid-feedback">
+                          {{ getProductError(index, 'unitPrice') }}
                         </div>
                       </div>
 
@@ -128,7 +128,7 @@
                         <label :for="`total-${index}`" class="form-label">Total</label>
                         <input 
                           :id="`total-${index}`" 
-                          :value="(product.quantity * product.price).toFixed(2)" 
+                          :value="(product.quantity * product.unitPrice).toFixed(2)" 
                           type="text" 
                           class="form-control" 
                           readonly
@@ -200,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { saleService, type CreateSaleRequest, type SaleProduct } from '@/services/saleService'
 import { clientService, type Client } from '@/services/clientService'
@@ -217,7 +217,7 @@ const form = reactive<CreateSaleRequest>({
     {
       productId: 0,
       quantity: 1,
-      price: 0
+      unitPrice: 0
     }
   ]
 })
@@ -273,7 +273,7 @@ const formIsValid = computed(() => {
     const isValid = product.productId && 
       product.productId > 0 && 
       product.quantity > 0 && 
-      product.price > 0
+      product.unitPrice > 0
     
     if (!isValid) {
       console.log(`Producto ${index} inválido:`, product)
@@ -294,7 +294,7 @@ const addProduct = () => {
   form.saleProducts.push({
     productId: 0,
     quantity: 1,
-    price: 0
+    unitPrice: 0
   })
 }
 
@@ -312,7 +312,7 @@ const updateProductPrice = (index: number) => {
   const product = form.saleProducts[index]
   const selectedProduct = availableProducts.value.find(p => p.id === product.productId)
   if (selectedProduct) {
-    product.price = selectedProduct.price
+    product.unitPrice = selectedProduct.price
   }
 }
 
@@ -334,7 +334,7 @@ const getProductError = (index: number, field: string): string => {
   if (field === 'quantity' && (!product.quantity || product.quantity <= 0)) {
     return 'La cantidad debe ser mayor a 0'
   }
-  if (field === 'price' && (!product.price || product.price <= 0)) {
+  if (field === 'unitPrice' && (!product.unitPrice || product.unitPrice <= 0)) {
     return 'El precio debe ser mayor a 0'
   }
   return ''
@@ -349,8 +349,10 @@ const totalProducts = computed(() => {
 // Total de la venta
 const totalAmount = computed(() => {
   if (!form.saleProducts) return 0
-  return form.saleProducts.reduce((total, product) => total + (product.quantity * product.price), 0)
+  return form.saleProducts.reduce((total, product) => total + (product.quantity * product.unitPrice), 0)
 })
+
+// El backend calcula el total automáticamente basándose en saleProducts
 
 // Guardar venta
 const saveSale = async () => {
@@ -367,7 +369,7 @@ const saveSale = async () => {
     
     // Validar productos individualmente
     const productErrors = form.saleProducts && form.saleProducts.some(product =>
-      !product.productId || product.productId === 0 || product.quantity <= 0 || product.price <= 0
+      !product.productId || product.productId === 0 || product.quantity <= 0 || product.unitPrice <= 0
     )
     if (productErrors) {
       return
@@ -376,6 +378,7 @@ const saveSale = async () => {
     // Log para depuración - ver qué datos se envían
     console.log('Datos a enviar al backend:', JSON.stringify(form))
     console.log('saleProducts:', form.saleProducts)
+    console.log('Total calculado en frontend:', totalAmount.value)
 
     await saleService.create(form)
     router.push('/sales')
